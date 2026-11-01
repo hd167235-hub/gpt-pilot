@@ -237,3 +237,20 @@ To improve GPT Pilot, we are tracking some events from which you can opt out at 
 🌟 As an open-source tool, it would mean the world to us if you starred the GPT-pilot repo 🌟
 
 💬 Join [the Discord server](https://discord.gg/HaqXugmxr9) to get in touch.
+
+---
+
+# ⛏️ Bundled demo app: Voxelcraft
+
+This checkout also contains **Voxelcraft**, a self-contained example application
+living outside the `core/` package: a Minecraft-like voxel sandbox written with
+Pyglet + NumPy (Perlin-noise terrain, first-person controller, block breaking and
+placing).
+
+```bash
+python -m pip install -r voxelcraft/requirements.txt
+python -m voxelcraft
+```
+
+See [voxelcraft/README.md](voxelcraft/README.md) for controls, architecture and
+the headless test-suite. It is independent of GPT Pilot and needs no API keys.

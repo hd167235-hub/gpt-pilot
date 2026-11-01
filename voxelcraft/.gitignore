@@ -1,0 +1,6 @@
+# saved worlds contain player edits - never commit them
+saves/
+*.npz
+
+__pycache__/
+*.pyc

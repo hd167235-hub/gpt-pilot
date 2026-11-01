@@ -1,0 +1,6 @@
+# Voxelcraft runtime dependencies
+pyglet>=2.0,<3
+numpy>=1.23
+
+# Optional: only needed for `python -m tools.render_preview` (screenshots)
+# pillow>=9.0
