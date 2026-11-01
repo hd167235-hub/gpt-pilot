@@ -68,7 +68,18 @@ def main(argv=None) -> int:
               file=sys.stderr)
         return 1
 
-    from .game import run
+    try:
+        from .game import run
+    except ImportError as exc:
+        # Most commonly: no OpenGL libraries on this machine.
+        print(f"Could not initialise the graphics layer: {exc}\n\n"
+              "Voxelcraft needs OpenGL 3.3.  On Linux install Mesa:\n"
+              "  Debian/Ubuntu: sudo apt install libgl1 libglx-mesa0 libgl1-mesa-dri\n"
+              "  Fedora:        sudo dnf install mesa-libGL mesa-dri-drivers\n"
+              "On a headless machine run it under a virtual display:\n"
+              "  xvfb-run -s '-screen 0 1280x720x24' python -m voxelcraft",
+              file=sys.stderr)
+        return 1
 
     try:
         run(seed=args.seed,
