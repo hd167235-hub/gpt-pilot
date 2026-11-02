@@ -31,6 +31,7 @@ SHOTS = ROOT / "docs" / "shots"
 OUT = ROOT / "download"
 
 VERSION = "1.0.0"
+FIXED_TIME = (2024, 1, 1, 0, 0, 0)  # keeps the zip reproducible
 
 #: modules in dependency order (imports only ever point backwards)
 MODULE_ORDER = [
@@ -176,36 +177,54 @@ def build_single_file() -> Path:
 
 
 def build_zip(single_file: Path) -> Path:
-    """Package the full project for download."""
+    """Package the full project for download.
+
+    The archive is byte-for-byte reproducible: entries are sorted and every
+    timestamp is pinned, so re-running the build never dirties the git tree.
+    """
     target = OUT / f"voxelcraft-{VERSION}.zip"
     base = f"voxelcraft-{VERSION}"
+    staging: list[tuple[str, bytes]] = []
+
+    def add_file(path: Path, arcname: str) -> None:
+        staging.append((arcname, path.read_bytes()))
+
+    def add_text(arcname: str, text: str) -> None:
+        staging.append((arcname, text.encode("utf-8")))
+
+    # single-file edition at the top level
+    add_file(single_file, f"{base}/Voxelcraft.py")
+
+    # the modular package + tests
+    for path in sorted(PKG.rglob("*.py")):
+        if "__pycache__" in path.parts:
+            continue
+        add_file(path, f"{base}/{path.relative_to(ROOT).as_posix()}")
+    for name in ("README.md", "requirements.txt", ".gitignore"):
+        add_file(PKG / name, f"{base}/voxelcraft/{name}")
+
+    # preview tooling (optional: needs pillow for PNG output)
+    for path in sorted(TOOLS.glob("*.py")):
+        add_file(path, f"{base}/tools/{path.name}")
+
+    # docs + screenshots so the README renders
+    for path in sorted(SHOTS.glob("*.png")):
+        add_file(path, f"{base}/docs/shots/{path.name}")
+
+    # launchers, license and quick start
+    add_text(f"{base}/start_windows.bat", WINDOWS_LAUNCHER)
+    add_text(f"{base}/start_linux_mac.sh", UNIX_LAUNCHER)
+    add_text(f"{base}/HUONG_DAN.txt", QUICK_START)
+    add_file(PKG / "README.md", f"{base}/README.md")
+    if (ROOT / "LICENSE").exists():
+        add_file(ROOT / "LICENSE", f"{base}/LICENSE")
+
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        # single-file edition at the top level
-        zf.write(single_file, f"{base}/Voxelcraft.py")
-
-        # the modular package + tests
-        for path in sorted(PKG.rglob("*.py")):
-            if "__pycache__" in path.parts:
-                continue
-            zf.write(path, f"{base}/{path.relative_to(ROOT).as_posix()}")
-        for name in ("README.md", "requirements.txt", ".gitignore"):
-            zf.write(PKG / name, f"{base}/voxelcraft/{name}")
-
-        # preview tooling (optional: needs pillow for PNG output)
-        for path in sorted(TOOLS.glob("*.py")):
-            zf.write(path, f"{base}/tools/{path.name}")
-
-        # docs + screenshots so the README renders
-        for path in sorted(SHOTS.glob("*.png")):
-            zf.write(path, f"{base}/docs/shots/{path.name}")
-
-        # launchers, license and quick start
-        zf.writestr(f"{base}/start_windows.bat", WINDOWS_LAUNCHER)
-        zf.writestr(f"{base}/start_linux_mac.sh", UNIX_LAUNCHER)
-        zf.writestr(f"{base}/HUONG_DAN.txt", QUICK_START)
-        zf.write(ROOT / "voxelcraft" / "README.md", f"{base}/README.md")
-        if (ROOT / "LICENSE").exists():
-            zf.write(ROOT / "LICENSE", f"{base}/LICENSE")
+        for arcname, data in sorted(staging):
+            info = zipfile.ZipInfo(arcname, date_time=FIXED_TIME)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = (0o644 & 0xFFFF) << 16
+            zf.writestr(info, data)
     return target
 
 
