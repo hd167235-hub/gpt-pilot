@@ -252,5 +252,13 @@ python -m pip install -r voxelcraft/requirements.txt
 python -m voxelcraft
 ```
 
+Without cloning anything, use the pre-built release in [`download/`](download):
+
+* `download/Voxelcraft.py` — the whole game in one file (`pip install pyglet numpy && python Voxelcraft.py`)
+* `download/voxelcraft-1.0.0.zip` — package, tests, pre-rendered screenshots and start scripts
+
+Rebuild them any time with `python -m tools.build_release` and smoke-test the
+shipped bundle with `python -m tools.verify_release`.
+
 See [voxelcraft/README.md](voxelcraft/README.md) for controls, architecture and
 the headless test-suite. It is independent of GPT Pilot and needs no API keys.

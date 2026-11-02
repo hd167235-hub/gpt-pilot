@@ -62,9 +62,12 @@ def main(argv=None) -> int:
     try:
         import pyglet  # noqa: F401
     except ImportError:
-        print("Pyglet is not installed.  Install the requirements first:\n"
-              f"    {sys.executable} -m pip install -r "
-              f"{os.path.join(os.path.dirname(__file__), 'requirements.txt')}",
+        requirements = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                    "requirements.txt")
+        hint = (f"    {sys.executable} -m pip install -r {requirements}"
+                if os.path.exists(requirements)
+                else f"    {sys.executable} -m pip install pyglet numpy")
+        print("Pyglet is not installed.  Install the requirements first:\n" + hint,
               file=sys.stderr)
         return 1
 
